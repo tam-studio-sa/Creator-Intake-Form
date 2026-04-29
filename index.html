@@ -487,7 +487,7 @@
         </div>
         <div class="field">
           <label>WhatsApp <span class="req">*</span></label>
-          <input id="whatsAppNumber" type="tel" name="whatsapp" placeholder="+966 5X XXX XXXX" required />
+          <input type="tel" name="whatsapp" placeholder="+966 5X XXX XXXX" required />
         </div>
       </div>
       <div class="field" style="margin-bottom:0">
@@ -601,7 +601,7 @@
     <div class="card">
       <div class="field">
         <label>Rate card</label>
-        <textarea name="rate_card" placeholder="Story: 500 SAR · Reel: 1,500 SAR · Package deals available..."></textarea>
+        <textarea name="rate_card" placeholder="Story: XXX SAR · Reel: XXX SAR · Package deals available..."></textarea>
       </div>
       <div class="field" style="margin-bottom:0">
         <label>Portfolio link</label>
@@ -695,9 +695,6 @@
     }
   });
 
-  const AllowedPhoneNumberValues = new Set(["+", " ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]);
-
-
   document.getElementById('intakeForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -733,61 +730,36 @@
       portfolio:      form.portfolio.value.trim(),
     };
 
-    let whatsAppFlag = false;
-    for (let i = 0; i < data.whatsapp.length; i++) {
-        if (!AllowedPhoneNumberValues.has(data.whatsapp[i])) {
-            whatsAppFlag = true;
-            break;
-        }
-    }
+    if (!data.name || !data.email || !data.whatsapp || !data.location) {
+      // Clear any previous error states
+      form.querySelectorAll('.error-state').forEach(el => el.classList.remove('error-state'));
 
-  if (!data.name || !data.email || !data.whatsapp || !data.location || whatsAppFlag) {
-    // Clear any previous error states
-    form.querySelectorAll('.error-state').forEach(el => el.classList.remove('error-state'));
+      // Mark each missing field
+      const required = [
+        { field: form.name,     value: data.name },
+        { field: form.email,    value: data.email },
+        { field: form.whatsapp, value: data.whatsapp },
+        { field: form.location, value: data.location },
+      ];
+      const missing = required.filter(r => !r.value);
+      missing.forEach(r => r.field.classList.add('error-state'));
 
-    // Mark each missing field
-    const required = [
-      { field: form.name,     value: data.name },
-      { field: form.email,    value: data.email },
-      { field: form.whatsapp, value: data.whatsapp },
-      { field: form.location, value: data.location },
-    ];
-    const missing = required.filter(r => !r.value);
-    missing.forEach(r => r.field.classList.add('error-state'));
-
-    // Flag whatsapp separately if it has a value but bad format
-    const whatsappFormatError = whatsAppFlag && !!data.whatsapp;
-    if (whatsappFormatError) {
-      form.whatsapp.classList.add('error-state');
-    }
-
-    // Build error message(s)
-    status.className = 'status error';
-    const messages = [];
-
-    if (missing.length > 0) {
-      const map = { name: 'name', email: 'email', whatsapp: 'WhatsApp', location: 'city' };
-      const labels = missing.map(r => map[r.field.name]);
+      // Show error message
+      status.className = 'status error';
+      const labels = missing.map(r => {
+        const map = { name: 'name', email: 'email', whatsapp: 'WhatsApp', location: 'city' };
+        return map[r.field.name];
+      });
       const list = labels.length === 1
         ? labels[0]
         : labels.slice(0, -1).join(', ') + ' and ' + labels.slice(-1);
-      messages.push(`Please fill in your ${list}.`);
-    }
+      status.textContent = `Please fill in your ${list}.`;
 
-    if (whatsappFormatError) {
-      messages.push('WhatsApp must contain only numbers and "+".');
+      // Scroll to first missing field and focus it
+      missing[0].field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => missing[0].field.focus({ preventScroll: true }), 400);
+      return;
     }
-
-    status.textContent = messages.join(' ');
-
-    // Scroll to the first problematic field (missing first, else whatsapp)
-    const firstField = missing[0]?.field || (whatsappFormatError ? form.whatsapp : null);
-    if (firstField) {
-      firstField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => firstField.focus({ preventScroll: true }), 400);
-    }
-    return;
-}
 
     // hello
 
